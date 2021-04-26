@@ -288,7 +288,7 @@ begin
         FieldByName('size').AsInteger       := iSize;
         FieldByName('icon_idx').AsInteger   := iIcon;
         FieldByName('sha').AsString         := '';
-        FieldByName('tags').AsString        := sTags;
+        FieldByName('tags').AsWideString    := sTags;
         try
           Post;
           if Assigned(frmProgress) then
@@ -356,8 +356,8 @@ begin
       sFind := Search[0];
       if Length(sFind) > 3 then
       begin
-        s := ' AND ((tags LIKE ''%%;%s;%%'') OR (name LIKE ''%%%s%%''))';
-        s := Format(s, [sFind, sFind]);
+        s := ' AND ((tags LIKE ''%%;%s;%%'') OR (name LIKE ''%%%s%%'') OR (path LIKE ''%%%s%%''))';
+        s := Format(s, [sFind, sFind, sFind]);
       end else
       begin
         s := ' AND ((tags LIKE ''%%;%s;%%''))';
