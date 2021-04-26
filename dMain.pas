@@ -109,7 +109,7 @@ begin
   try
     con.DriverName := 'SQLite';
     con.Params.Database := DBPath;
-    con.Params.Values['OpenMode'] := 'CreateUTF8';
+    con.Params.Values['OpenMode'] := 'CreateUTF16';
     con.Connected := True;
     scr.Connection := con;
     s.Seek(0, soFromBeginning);

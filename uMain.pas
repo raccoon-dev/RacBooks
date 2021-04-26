@@ -188,8 +188,8 @@ begin
     with dmMain.CreateQuery do
       try
         SQL.Text := 'INSERT INTO folders (name, path) VALUES (:NAME, :PATH)';
-        ParamByName('NAME').AsString := ExtractFileName(Folder);
-        ParamByName('PATH').AsString := Folder;
+        ParamByName('NAME').AsWideString := ExtractFileName(Folder);
+        ParamByName('PATH').AsWideString := Folder;
         ExecSQL;
         fid := dmMain.conMain.GetLastAutoGenValue('');
         dmMain.RefreshFolders;
@@ -238,8 +238,8 @@ begin
       with dmMain.CreateQuery do
         try
           SQL.Text := 'UPDATE folders SET name=:NAME WHERE id=:ID';
-          ParamByName('NAME').AsString := NewName;
-          ParamByName('ID').AsLargeInt := d.Id;
+          ParamByName('NAME').AsWideString := NewName;
+          ParamByName('ID').AsLargeInt     := d.Id;
           ExecSQL;
           d.Name := NewName;
         finally
@@ -269,32 +269,37 @@ begin
       sName := GetDBFileName(FileName);
       sExt  := GetDBFileExt(FileName);
       SQL.Text := 'SELECT * FROM files WHERE folder_id=:FID AND name=:NAME AND ext=:EXT AND path=:PATH';
-      ParamByName('FID').AsLargeInt := FolderID;
-      ParamByName('NAME').AsString  := sName;
-      ParamByName('EXT').AsString   := sExt;
-      ParamByName('PATH').AsString  := SubFolder;
+      ParamByName('FID').AsLargeInt    := FolderID;
+      ParamByName('NAME').AsWideString := sName;
+      ParamByName('EXT').AsWideString  := sExt;
+      ParamByName('PATH').AsWideString := SubFolder;
       Active := True;
       if RecordCount = 0 then
       begin
-        if Assigned(frmProgress) then
-        begin
-          Inc(FCounterAdd);
-          frmProgress.TextBottom := Format('File: %s'#13#10'Files added: %d'#13#10'Files skipped: %d', [FileName, FCounterAdd, FCounterSkip]);
-        end;
         FilePath := TPath.Combine(TPath.Combine(BaseFolder, SubFolder), FileName);
         iSize    := GetDBFileSize(FilePath);
         sTags    := GetDBFileTags(FileName);
         iIcon    := GetDBFileIcon(sExt);
         Insert;
         FieldByName('folder_id').AsLargeInt := FolderID;
-        FieldByName('name').AsString        := sName;
-        FieldByName('ext').AsString         := sExt;
-        FieldByName('path').AsString        := SubFolder;
+        FieldByName('name').AsWideString    := sName;
+        FieldByName('ext').AsWideString     := sExt;
+        FieldByName('path').AsWideString    := SubFolder;
         FieldByName('size').AsInteger       := iSize;
         FieldByName('icon_idx').AsInteger   := iIcon;
         FieldByName('sha').AsString         := '';
         FieldByName('tags').AsString        := sTags;
-        Post;
+        try
+          Post;
+          if Assigned(frmProgress) then
+          begin
+            Inc(FCounterAdd);
+            frmProgress.TextBottom := Format('File: %s'#13#10'Files added: %d'#13#10'Files skipped: %d', [FileName, FCounterAdd, FCounterSkip]);
+          end;
+        except
+          on E: Exception do
+            TGlobals.ShowError(Format('Error during added new file:'#13#10'File name: "%s.%s"'#13#10'Sub folder: "%s"'#13#10'With message:'#13#10'%s', [sName, sExt, SubFolder, E.Message]));
+        end;
       end else
         if Assigned(frmProgress) then
         begin
@@ -452,9 +457,9 @@ begin
         vFiles.RootNodeCount := vFiles.RootNodeCount + 1;
         d         := vFiles.GetNodeData(vFiles.GetLast);
         d.Id      := FieldByName('id').AsLargeInt;
-        d.Name    := FieldByName('name').AsString;
-        d.Ext     := FieldByName('ext').AsString;
-        d.Path    := FieldByName('path').AsString;
+        d.Name    := FieldByName('name').AsWideString;
+        d.Ext     := FieldByName('ext').AsWideString;
+        d.Path    := FieldByName('path').AsWideString;
         d.Size    := FieldByName('size').AsInteger;
         d.Icon    := FieldByName('icon_idx').AsInteger;
         d.Comment := FieldByName('comment').AsString;
@@ -481,8 +486,8 @@ begin
         vFolders.RootNodeCount := vFolders.RootNodeCount + 1;
         d         := vFolders.GetNodeData(vFolders.GetLast);
         d.Id      := FieldByName('id').AsLargeInt;
-        d.Name    := FieldByName('name').AsString;
-        d.Path    := FieldByName('path').AsString;
+        d.Name    := FieldByName('name').AsWideString;
+        d.Path    := FieldByName('path').AsWideString;
         d.Comment := FieldByName('comment').AsString;
         d.Files   := FieldByName('files_nr').AsInteger;
         Next;
@@ -694,7 +699,7 @@ begin
           FCounterSkip := 0;
           frmProgress.TextTop := 'Scanning folder ' + FieldByName('path').AsString;
           frmProgress.Show;
-          DoScanFolder(FolderID, FieldByName('path').AsString, '');
+          DoScanFolder(FolderID, FieldByName('path').AsWideString, '');
         end;
         dmMain.RefreshFolders;
         FillFolders;

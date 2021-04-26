@@ -7,7 +7,8 @@ object dmMain: TdmMain
   object conMain: TFDConnection
     Params.Strings = (
       'OpenMode=ReadWrite'
-      'DriverID=SQLite')
+      'DriverID=SQLite'
+      'StringFormat=Unicode')
     AfterConnect = conMainAfterConnect
     Left = 24
     Top = 24
